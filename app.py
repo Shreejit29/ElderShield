@@ -2,14 +2,15 @@
 ElderShield
 AI-assisted anti-phishing and scam safety assistant.
 
-Streamlit entry point.
+Streamlit application entry point.
 
-Important safety boundaries:
-- User evidence is treated as untrusted content.
-- ElderShield never asks for OTPs, PINs, passwords, or card credentials.
-- URLs are analyzed locally before any optional future network access.
-- Gemini failures must never become a SAFE verdict.
-- A normal web app cannot intercept cellular calls or other apps in real time.
+Safety principles:
+- Deterministic safety rules remain functional without Gemini.
+- Gemini is an additional evidence layer, not the only detector.
+- User-submitted content is treated as untrusted evidence.
+- ElderShield never asks users for OTPs, PINs, passwords, CVV,
+  or full payment-card credentials.
+- The current web version cannot intercept phone calls or other apps.
 """
 
 from __future__ import annotations
@@ -19,20 +20,30 @@ from typing import Any
 
 import streamlit as st
 
-from modules.case_engine import analyze_case
 from modules.call_guardian import assess_call_text
-from modules.gemini_audio import analyze_audio
-from modules.gemini_screen import analyze_screen
 from modules.health_check import run_health_check
 from modules.input_guard import validate_image
-from modules.intervention import get_intervention
 from modules.report import (
     normalize_risk,
     report_from_case,
     report_to_markdown,
     report_to_text,
 )
+from modules.text_rules import analyze_text_rules
 from modules.url_analyzer import analyze_url
+
+# Optional AI modules.
+# Import failures must not prevent the deterministic application
+# from starting.
+try:
+    from modules.gemini_screen import analyze_screen
+except Exception:
+    analyze_screen = None
+
+try:
+    from modules.gemini_audio import analyze_audio
+except Exception:
+    analyze_audio = None
 
 
 # ============================================================
@@ -65,48 +76,510 @@ if "last_case" not in st.session_state:
 
 
 # ============================================================
-# HELPERS
+# RISK HELPERS
 # ============================================================
+
+RISK_ORDER = {
+    "SAFE": 0,
+    "UNKNOWN": 1,
+    "CAUTION": 2,
+    "HIGH": 3,
+    "CRITICAL": 4,
+}
 
 RISK_EMOJI = {
     "SAFE": "🟢",
+    "UNKNOWN": "⚪",
     "CAUTION": "🟡",
     "HIGH": "🟠",
     "CRITICAL": "🔴",
-    "UNKNOWN": "⚪",
 }
 
 
-def risk_label(risk: str) -> str:
-    """Return a safe normalized risk label."""
+def clean_risk(value: Any) -> str:
+    """Normalize a risk value safely."""
+
     try:
-        return normalize_risk(risk)
+        result = normalize_risk(value)
     except Exception:
-        value = str(risk or "UNKNOWN").upper()
+        result = str(value or "UNKNOWN").upper()
 
-        if value in {
-            "SAFE",
-            "CAUTION",
-            "HIGH",
-            "CRITICAL",
-            "UNKNOWN",
-        }:
-            return value
-
+    if result not in RISK_ORDER:
         return "UNKNOWN"
 
+    return result
 
-def show_risk(risk: str) -> None:
-    """Display a prominent risk result."""
-    level = risk_label(risk)
-    emoji = RISK_EMOJI.get(level, "⚪")
 
-    st.subheader(f"{emoji} {level}")
+def highest_risk(*values: Any) -> str:
+    """Return the most severe valid risk."""
+
+    risks = [
+        clean_risk(value)
+        for value in values
+    ]
+
+    return max(
+        risks,
+        key=lambda risk: RISK_ORDER[risk],
+    )
+
+
+def merge_unique(
+    *collections: Any,
+) -> list[str]:
+    """Merge string collections without duplicates."""
+
+    output: list[str] = []
+
+    for collection in collections:
+        if not collection:
+            continue
+
+        if isinstance(
+            collection,
+            str,
+        ):
+            collection = [collection]
+
+        try:
+            iterator = collection
+        except Exception:
+            continue
+
+        for item in iterator:
+            value = str(item).strip()
+
+            if value and value not in output:
+                output.append(value)
+
+    return output
+
+
+# ============================================================
+# RESULT BUILDERS
+# ============================================================
+
+def emergency_actions() -> list[str]:
+    return [
+        "Stop the interaction before taking further action.",
+        "Do not share OTPs, PINs, passwords or card credentials.",
+        "Do not install remote-access software.",
+        "Do not approve or transfer money.",
+        "Verify the request through the organization's official channel.",
+    ]
+
+
+def exception_case(
+    channel: str,
+    error: Exception | None = None,
+) -> dict[str, Any]:
+    """
+    Create a safe failure result.
+
+    An internal failure is NEVER represented as SAFE.
+    """
+
+    result = {
+        "risk": "UNKNOWN",
+        "summary": (
+            "ElderShield could not complete the analysis."
+        ),
+        "reasons": [
+            "The analysis engine encountered an internal error."
+        ],
+        "actions": emergency_actions(),
+        "categories": [],
+        "dangerous_actions": [],
+        "signal_groups": [],
+        "channels": [channel],
+    }
+
+    # Show technical information only when explicitly enabled.
+    if st.session_state.get(
+        "show_debug",
+        False,
+    ) and error is not None:
+        result["debug_error"] = str(error)
+
+    return result
+
+
+def build_text_case(
+    text: str,
+    channel: str,
+) -> dict[str, Any]:
+    """
+    Primary deterministic message analysis.
+
+    This function does not require Gemini or network access.
+    """
+
+    try:
+        result = analyze_text_rules(
+            text
+        )
+
+        if not isinstance(
+            result,
+            dict,
+        ):
+            return exception_case(
+                channel
+            )
+
+        risk = clean_risk(
+            result.get(
+                "risk",
+                "UNKNOWN",
+            )
+        )
+
+        reasons = merge_unique(
+            result.get("reasons", []),
+        )
+
+        actions = emergency_actions()
+
+        dangerous_actions = merge_unique(
+            result.get(
+                "dangerous_actions",
+                [],
+            )
+        )
+
+        categories = merge_unique(
+            result.get(
+                "categories",
+                [],
+            )
+        )
+
+        signal_groups = merge_unique(
+            result.get(
+                "signal_groups",
+                [],
+            )
+        )
+
+        # A deterministic critical action is never downgraded.
+        critical_terms = {
+            "OTP",
+            "UPI PIN",
+            "ATM PIN",
+            "PASSWORD",
+            "CVV",
+            "BANK CREDENTIALS",
+            "REMOTE ACCESS",
+            "SCREEN SHARING",
+            "MONEY TRANSFER",
+            "PAYMENT",
+            "PAYMENT APPROVAL",
+        }
+
+        action_text = {
+            item.upper()
+            for item in dangerous_actions
+        }
+
+        if action_text.intersection(
+            critical_terms
+        ):
+            risk = "CRITICAL"
+
+        if risk == "SAFE":
+            actions = [
+                "No strong scam indicators were detected.",
+                "Still verify unexpected financial requests independently.",
+            ]
+
+        elif risk == "CAUTION":
+            actions = [
+                "Pause before responding.",
+                "Do not share sensitive information.",
+                "Verify the sender independently.",
+            ]
+
+        elif risk == "HIGH":
+            actions = [
+                "Do not click suspicious links.",
+                "Do not install unknown applications.",
+                "Do not provide financial or credential information.",
+                "Verify through an official channel.",
+            ]
+
+        return {
+            "risk": risk,
+            "summary": (
+                "ElderShield analyzed the submitted content "
+                "using local safety rules."
+            ),
+            "reasons": reasons,
+            "actions": actions,
+            "categories": categories,
+            "dangerous_actions": dangerous_actions,
+            "signal_groups": signal_groups,
+            "channels": [channel],
+            "deterministic_evidence": result,
+        }
+
+    except Exception as exc:
+        return exception_case(
+            channel,
+            exc,
+        )
+
+
+def build_url_case(
+    url: str,
+) -> dict[str, Any]:
+    """Analyze a URL without opening it."""
+
+    try:
+        result = analyze_url(
+            url
+        )
+
+        if not isinstance(
+            result,
+            dict,
+        ):
+            return exception_case(
+                "url"
+            )
+
+        risk = clean_risk(
+            result.get(
+                "risk",
+                "UNKNOWN",
+            )
+        )
+
+        reasons = merge_unique(
+            result.get(
+                "reasons",
+                [],
+            )
+        )
+
+        indicators = merge_unique(
+            result.get(
+                "indicators",
+                [],
+            )
+        )
+
+        if indicators:
+            reasons.extend(
+                item
+                for item in indicators
+                if item not in reasons
+            )
+
+        if risk == "SAFE":
+            actions = [
+                "No strong structural warning was detected.",
+                "Still verify unexpected links before entering information.",
+            ]
+
+        elif risk == "CAUTION":
+            actions = [
+                "Pause before opening the link.",
+                "Check the domain carefully.",
+                "Verify the website independently.",
+            ]
+
+        else:
+            actions = [
+                "Do not open the suspicious link.",
+                "Do not enter passwords, OTPs or banking information.",
+                "Visit the organization's official website manually.",
+            ]
+
+        return {
+            "risk": risk,
+            "summary": (
+                "ElderShield analyzed the URL structure "
+                "without opening the website."
+            ),
+            "reasons": reasons,
+            "actions": actions,
+            "categories": [],
+            "dangerous_actions": [],
+            "signal_groups": [],
+            "channels": ["url"],
+            "url_analysis": result,
+        }
+
+    except Exception as exc:
+        return exception_case(
+            "url",
+            exc,
+        )
+
+
+def build_call_case(
+    text: str,
+) -> dict[str, Any]:
+    """Analyze caller statements using deterministic rules."""
+
+    try:
+        call_result = assess_call_text(
+            text
+        )
+
+        text_result = analyze_text_rules(
+            text
+        )
+
+        call_risk = clean_risk(
+            call_result.get(
+                "risk",
+                "UNKNOWN",
+            )
+        )
+
+        text_risk = clean_risk(
+            text_result.get(
+                "risk",
+                "UNKNOWN",
+            )
+        )
+
+        risk = highest_risk(
+            call_risk,
+            text_risk,
+        )
+
+        reasons = merge_unique(
+            call_result.get(
+                "reasons",
+                [],
+            ),
+            text_result.get(
+                "reasons",
+                [],
+            ),
+        )
+
+        dangerous_actions = merge_unique(
+            call_result.get(
+                "dangerous_actions",
+                [],
+            ),
+            text_result.get(
+                "dangerous_actions",
+                [],
+            ),
+        )
+
+        categories = merge_unique(
+            call_result.get(
+                "categories",
+                [],
+            ),
+            text_result.get(
+                "categories",
+                [],
+            ),
+        )
+
+        signal_groups = merge_unique(
+            text_result.get(
+                "signal_groups",
+                [],
+            )
+        )
+
+        # Explicit credential/remote-access requests are critical.
+        action_text = {
+            item.upper()
+            for item in dangerous_actions
+        }
+
+        critical_terms = {
+            "OTP",
+            "UPI PIN",
+            "ATM PIN",
+            "PASSWORD",
+            "CVV",
+            "REMOTE ACCESS",
+            "SCREEN SHARING",
+            "MONEY TRANSFER",
+            "PAYMENT",
+        }
+
+        if action_text.intersection(
+            critical_terms
+        ):
+            risk = "CRITICAL"
+
+        if risk == "SAFE":
+            actions = [
+                "No strong scam indicators were detected.",
+                "Still verify unexpected caller claims independently.",
+            ]
+
+        elif risk == "CAUTION":
+            actions = [
+                "Pause and verify who is calling.",
+                "Do not share sensitive information.",
+            ]
+
+        elif risk == "HIGH":
+            actions = [
+                "Do not follow payment or credential instructions.",
+                "End the interaction if pressure continues.",
+                "Verify the organization independently.",
+            ]
+
+        else:
+            actions = emergency_actions()
+
+        return {
+            "risk": risk,
+            "summary": (
+                "ElderShield assessed the caller statement "
+                "using local safety rules."
+            ),
+            "reasons": reasons,
+            "actions": actions,
+            "categories": categories,
+            "dangerous_actions": dangerous_actions,
+            "signal_groups": signal_groups,
+            "channels": ["call"],
+            "call_evidence": call_result,
+        }
+
+    except Exception as exc:
+        return exception_case(
+            "call",
+            exc,
+        )
+
+
+# ============================================================
+# DISPLAY
+# ============================================================
+
+def display_risk(risk: str) -> None:
+    """Display risk prominently."""
+
+    level = clean_risk(
+        risk
+    )
+
+    emoji = RISK_EMOJI[
+        level
+    ]
+
+    st.subheader(
+        f"{emoji} {level}"
+    )
 
     if level == "SAFE":
         st.success(
             "No strong scam indicators were detected. "
-            "Still verify important requests through official channels."
+            "Continue to verify important requests."
         )
 
     elif level == "CAUTION":
@@ -117,15 +590,14 @@ def show_risk(risk: str) -> None:
 
     elif level == "HIGH":
         st.warning(
-            "This looks suspicious. Do not provide sensitive information "
-            "or make payments until independently verified."
+            "This content looks suspicious. "
+            "Do not provide sensitive information or make payments."
         )
 
     elif level == "CRITICAL":
         st.error(
-            "STOP. This interaction contains a critical safety signal. "
-            "Do not share OTPs, PINs, passwords, bank credentials, "
-            "or approve payments."
+            "STOP. A critical scam signal was detected. "
+            "Do not share OTPs, PINs, passwords or approve payments."
         )
 
     else:
@@ -135,38 +607,142 @@ def show_risk(risk: str) -> None:
         )
 
 
-def display_list(
+def display_items(
     title: str,
     items: Any,
 ) -> None:
-    """Display a compact list when values are available."""
+    """Display a list of findings."""
+
     if not items:
         return
 
-    st.markdown(f"**{title}**")
-
-    for item in items:
-        text = str(item).strip()
-
-        if text:
-            st.markdown(f"- {text}")
-
-
-def save_case(case: dict[str, Any]) -> None:
-    """
-    Save only privacy-conscious case information.
-
-    Raw messages, images, and audio are intentionally not stored.
-    """
-
-    risk = risk_label(
-        case.get("risk", "UNKNOWN")
+    st.markdown(
+        f"**{title}**"
     )
 
-    history_item = {
-        "risk": risk,
+    for item in items:
+        value = str(
+            item
+        ).strip()
+
+        if value:
+            st.markdown(
+                f"- {value}"
+            )
+
+
+def display_case(
+    case: dict[str, Any],
+) -> None:
+    """Display a standardized analysis result."""
+
+    if not isinstance(
+        case,
+        dict,
+    ):
+        st.error(
+            "Invalid ElderShield result."
+        )
+        return
+
+    display_risk(
+        case.get(
+            "risk",
+            "UNKNOWN",
+        )
+    )
+
+    summary = case.get(
+        "summary"
+    )
+
+    if summary:
+        st.markdown(
+            f"### What ElderShield found\n\n{summary}"
+        )
+
+    display_items(
+        "Why this was flagged",
+        case.get(
+            "reasons",
+            [],
+        ),
+    )
+
+    display_items(
+        "Dangerous actions detected",
+        case.get(
+            "dangerous_actions",
+            [],
+        ),
+    )
+
+    display_items(
+        "Recommended actions",
+        case.get(
+            "actions",
+            [],
+        ),
+    )
+
+    display_items(
+        "Scam categories",
+        case.get(
+            "categories",
+            [],
+        ),
+    )
+
+    display_items(
+        "Signal groups",
+        case.get(
+            "signal_groups",
+            [],
+        ),
+    )
+
+    channels = case.get(
+        "channels",
+        []
+    )
+
+    if channels:
+        st.caption(
+            "Evidence channel(s): "
+            + ", ".join(
+                str(item)
+                for item in channels
+            )
+        )
+
+    if case.get(
+        "debug_error"
+    ):
+        st.error(
+            "Development diagnostic: "
+            + str(
+                case["debug_error"]
+            )
+        )
+
+
+def save_case(
+    case: dict[str, Any],
+) -> None:
+    """Save privacy-conscious history only."""
+
+    item = {
+        "risk": clean_risk(
+            case.get(
+                "risk",
+                "UNKNOWN",
+            )
+        ),
         "summary": str(
-            case.get("summary", "")
+            case.get(
+                "summary",
+                "",
+            )
         )[:500],
         "categories": case.get(
             "categories",
@@ -180,7 +756,7 @@ def save_case(case: dict[str, Any]) -> None:
 
     st.session_state.history.insert(
         0,
-        history_item,
+        item,
     )
 
     st.session_state.history = (
@@ -190,175 +766,67 @@ def save_case(case: dict[str, Any]) -> None:
     st.session_state.last_case = case
 
 
-def display_case(case: dict[str, Any]) -> None:
-    """Display a standardized ElderShield case result."""
-
-    if not isinstance(case, dict):
-        st.error(
-            "ElderShield received an invalid analysis result."
-        )
-        return
-
-    risk = risk_label(
-        case.get("risk", "UNKNOWN")
-    )
-
-    show_risk(risk)
-
-    summary = case.get("summary")
-
-    if summary:
-        st.markdown(
-            f"### What ElderShield found\n\n{summary}"
-        )
-
-    display_list(
-        "Why this was flagged",
-        case.get("reasons", []),
-    )
-
-    display_list(
-        "Dangerous actions detected",
-        case.get("dangerous_actions", []),
-    )
-
-    display_list(
-        "Recommended actions",
-        case.get("actions", []),
-    )
-
-    display_list(
-        "Scam categories",
-        case.get("categories", []),
-    )
-
-    display_list(
-        "Detected signal groups",
-        case.get("signal_groups", []),
-    )
-
-    channels = case.get("channels", [])
-
-    if channels:
-        st.caption(
-            "Evidence channels: "
-            + ", ".join(
-                str(channel)
-                for channel in channels
-            )
-        )
-
-    confidence = case.get(
-        "confidence_note"
-    )
-
-    if confidence:
-        st.caption(
-            f"ℹ️ {confidence}"
-        )
-
-
-def safe_case_from_text(
-    text: str,
-    channel: str,
-) -> dict[str, Any]:
-    """
-    Analyze text through the central case engine.
-
-    Any unexpected failure becomes UNKNOWN rather than SAFE.
-    """
+def display_report(
+    case: dict[str, Any],
+) -> None:
+    """Display privacy-conscious report."""
 
     try:
-        return analyze_case(
-            message=text,
-            channel=channel,
+        report = report_from_case(
+            case
         )
-    except TypeError:
-        # Compatibility with earlier case-engine signatures.
-        try:
-            return analyze_case(
-                message=text,
-            )
-        except Exception as exc:
-            return {
-                "risk": "UNKNOWN",
-                "summary": (
-                    "ElderShield could not complete the analysis."
-                ),
-                "reasons": [
-                    "The analysis engine returned an error."
-                ],
-                "actions": [
-                    "Do not take financial or credential-related action.",
-                    "Verify through an official channel.",
-                ],
-                "error": str(exc),
-                "channels": [channel],
-            }
-
-    except Exception as exc:
-        return {
-            "risk": "UNKNOWN",
-            "summary": (
-                "ElderShield could not complete the analysis."
-            ),
-            "reasons": [
-                "The analysis engine returned an error."
-            ],
-            "actions": [
-                "Do not take financial or credential-related action.",
-                "Verify through an official channel.",
-            ],
-            "error": str(exc),
-            "channels": [channel],
-        }
-
-
-def display_report(case: dict[str, Any]) -> None:
-    """Offer a privacy-conscious report without raw evidence."""
-
-    try:
-        report = report_from_case(case)
 
         with st.expander(
             "📋 View safety report"
         ):
+
             st.markdown(
-                report_to_markdown(report)
+                report_to_markdown(
+                    report
+                )
             )
 
             st.download_button(
-                label="Download text report",
-                data=report_to_text(report),
+                "Download text report",
+                report_to_text(
+                    report
+                ),
                 file_name="eldershield_report.txt",
                 mime="text/plain",
             )
 
-    except Exception:
-        # Reporting must never break the main safety result.
-        return
+    except Exception as exc:
+
+        if st.session_state.get(
+            "show_debug",
+            False,
+        ):
+            st.caption(
+                f"Report unavailable: {exc}"
+            )
 
 
 # ============================================================
 # HEADER
 # ============================================================
 
-st.title("🛡️ ElderShield")
+st.title(
+    "🛡️ ElderShield"
+)
 
 st.markdown(
     """
 ### Show ElderShield what you are seeing, and it tells you what to do.
 
-**Stop → Check → Protect**
+**STOP → CHECK → PROTECT**
 
-ElderShield is a safety aid for suspicious messages, screens,
-calls and links. It is especially designed around common
-scam patterns affecting people in India.
+ElderShield is an open-source safety aid designed to help
+people recognize phishing, impersonation and scam patterns.
 """
 )
 
 st.caption(
-    f"ElderShield v{APP_VERSION} • "
+    f"Version {APP_VERSION} • "
     "Open-source social-benefit project"
 )
 
@@ -369,11 +837,13 @@ st.caption(
 
 with st.sidebar:
 
-    st.header("🛡️ ElderShield")
+    st.header(
+        "🛡️ ElderShield"
+    )
 
     st.markdown(
         """
-**Simple rule:**
+**Golden rule**
 
 > Stop first.  
 > Check second.  
@@ -383,27 +853,34 @@ with st.sidebar:
 
     st.divider()
 
-    st.subheader("🔐 Privacy")
+    st.subheader(
+        "🔐 Privacy"
+    )
 
     st.caption(
-        "Never enter an actual OTP, UPI PIN, ATM PIN, "
-        "password or full card credentials into ElderShield."
+        "Never intentionally enter a real OTP, "
+        "UPI PIN, ATM PIN, password, CVV or full card number."
     )
 
     st.divider()
 
-    st.subheader("System")
+    st.subheader(
+        "System status"
+    )
 
     try:
         health = run_health_check()
 
-        if health.get("ok"):
+        if health.get(
+            "ok",
+            False,
+        ):
             st.success(
-                "Local safety modules: OK"
+                "Core modules: OK"
             )
         else:
             st.warning(
-                "Some local modules need attention."
+                "Some modules need attention."
             )
 
     except Exception:
@@ -411,15 +888,18 @@ with st.sidebar:
             "Health check unavailable."
         )
 
-    st.divider()
-
-    st.caption(
-        "ElderShield is a safety aid, not a guarantee."
+    st.checkbox(
+        "Show technical diagnostics",
+        key="show_debug",
+        help=(
+            "Useful during development. "
+            "Do not enable this for ordinary users."
+        ),
     )
 
 
 # ============================================================
-# PRIVACY ACKNOWLEDGEMENT
+# PRIVACY GATE
 # ============================================================
 
 if not st.session_state.privacy_acknowledged:
@@ -428,19 +908,18 @@ if not st.session_state.privacy_acknowledged:
         """
 ### Before using ElderShield
 
-ElderShield analyzes content that you provide.
+Do not intentionally submit:
 
-Do **not** intentionally submit:
-- OTPs
-- UPI PINs
-- ATM PINs
-- passwords
-- full card numbers
+- OTP
+- UPI PIN
+- ATM PIN
+- Password
 - CVV
-- other highly sensitive credentials
+- Full card credentials
 
-Treat screenshots, messages, links and audio as untrusted evidence.
-        """
+Screenshots, links, messages and audio should always be treated
+as untrusted evidence.
+"""
     )
 
     acknowledged = st.checkbox(
@@ -448,7 +927,7 @@ Treat screenshots, messages, links and audio as untrusted evidence.
     )
 
     if st.button(
-        "Continue to ElderShield",
+        "Continue",
         type="primary",
         disabled=not acknowledged,
     ):
@@ -462,7 +941,7 @@ Treat screenshots, messages, links and audio as untrusted evidence.
 # MAIN TABS
 # ============================================================
 
-tabs = st.tabs(
+screen_tab, message_tab, call_tab, url_tab = st.tabs(
     [
         "🖥️ Screen Guardian",
         "💬 Message Guardian",
@@ -476,18 +955,15 @@ tabs = st.tabs(
 # SCREEN GUARDIAN
 # ============================================================
 
-with tabs[0]:
+with screen_tab:
 
-    st.header("🖥️ Screen Guardian")
+    st.header(
+        "🖥️ Screen Guardian"
+    )
 
     st.write(
         "Upload a screenshot of a suspicious message, "
-        "website, payment request, bank notice or pop-up."
-    )
-
-    st.info(
-        "Before uploading, hide OTPs, PINs, passwords and "
-        "full payment-card credentials."
+        "website, payment request or pop-up."
     )
 
     image_file = st.file_uploader(
@@ -501,7 +977,7 @@ with tabs[0]:
         key="screen_upload",
     )
 
-    if image_file is not None:
+    if image_file:
 
         image_bytes = image_file.getvalue()
 
@@ -513,12 +989,14 @@ with tabs[0]:
             "valid",
             False,
         ):
+
             st.error(
                 validation.get(
                     "error",
                     "Invalid image.",
                 )
             )
+
         else:
 
             st.image(
@@ -528,86 +1006,146 @@ with tabs[0]:
             )
 
             if st.button(
-                "🔍 Check this screen",
+                "🔍 Check screen",
                 type="primary",
-                key="analyze_screen",
+                key="screen_button",
             ):
 
-                with st.spinner(
-                    "ElderShield is checking the screen..."
-                ):
+                if analyze_screen is None:
 
-                    try:
-                        ai_result = analyze_screen(
-                            image_bytes
-                        )
+                    st.warning(
+                        "AI screen analysis is currently unavailable."
+                    )
 
-                        # Feed AI evidence into the central engine
-                        # where possible.
-                        case = safe_case_from_text(
-                            json.dumps(
+                    case = {
+                        "risk": "UNKNOWN",
+                        "summary": (
+                            "Screen AI analysis is unavailable."
+                        ),
+                        "reasons": [
+                            "The Gemini screen-analysis module could not be loaded."
+                        ],
+                        "actions": emergency_actions(),
+                        "channels": ["screen"],
+                    }
+
+                else:
+
+                    with st.spinner(
+                        "Analyzing screen..."
+                    ):
+
+                        try:
+
+                            ai_result = analyze_screen(
+                                image_bytes
+                            )
+
+                            if not isinstance(
                                 ai_result,
-                                ensure_ascii=False,
-                            ),
-                            "screen",
-                        )
+                                dict,
+                            ):
+                                raise ValueError(
+                                    "Invalid AI result."
+                                )
 
-                        # Preserve AI evidence.
-                        case["ai_evidence"] = ai_result
+                            ai_risk = clean_risk(
+                                ai_result.get(
+                                    "risk",
+                                    "UNKNOWN",
+                                )
+                            )
 
-                    except Exception:
-                        case = {
-                            "risk": "UNKNOWN",
-                            "summary": (
-                                "The screen could not be reliably analyzed."
-                            ),
-                            "reasons": [
-                                "AI analysis was unavailable."
-                            ],
-                            "actions": [
-                                "Do not click links or approve payments.",
-                                "Verify the request independently.",
-                            ],
-                            "channels": ["screen"],
-                        }
+                            reasons = merge_unique(
+                                ai_result.get(
+                                    "reasons",
+                                    [],
+                                )
+                            )
 
-                save_case(case)
-                display_case(case)
-                display_report(case)
+                            dangerous = merge_unique(
+                                ai_result.get(
+                                    "dangerous_actions",
+                                    [],
+                                )
+                            )
+
+                            if ai_risk == "CRITICAL":
+                                actions = emergency_actions()
+                            elif ai_risk == "HIGH":
+                                actions = [
+                                    "Do not click suspicious links.",
+                                    "Do not provide credentials.",
+                                    "Verify the request independently.",
+                                ]
+                            else:
+                                actions = [
+                                    "Verify important requests independently.",
+                                ]
+
+                            case = {
+                                "risk": ai_risk,
+                                "summary": ai_result.get(
+                                    "summary",
+                                    "Screen evidence analyzed.",
+                                ),
+                                "reasons": reasons,
+                                "actions": actions,
+                                "categories": [],
+                                "dangerous_actions": dangerous,
+                                "signal_groups": [],
+                                "channels": ["screen"],
+                                "ai_evidence": ai_result,
+                            }
+
+                        except Exception as exc:
+
+                            case = exception_case(
+                                "screen",
+                                exc,
+                            )
+
+                save_case(
+                    case
+                )
+
+                display_case(
+                    case
+                )
+
+                display_report(
+                    case
+                )
 
 
 # ============================================================
 # MESSAGE GUARDIAN
 # ============================================================
 
-with tabs[1]:
+with message_tab:
 
-    st.header("💬 Message Guardian")
-
-    st.write(
-        "Paste a suspicious SMS, WhatsApp message, email text, "
-        "or other message here."
+    st.header(
+        "💬 Message Guardian"
     )
 
-    st.info(
-        "Use synthetic test messages whenever possible. "
-        "Never paste an actual OTP, PIN or password."
+    st.write(
+        "Paste an SMS, WhatsApp message, email text or "
+        "other suspicious message."
     )
 
     message = st.text_area(
-        "Paste message",
+        "Message",
         height=220,
         placeholder=(
-            "Example: Your account will be blocked today. "
-            "Please verify immediately..."
+            "Paste the suspicious message here..."
         ),
-        key="message_text",
+        key="message_input",
     )
 
     if st.button(
         "🔍 Check message",
         type="primary",
-        key="analyze_message",
+        key="message_button",
     ):
 
         if not message.strip():
@@ -619,44 +1157,53 @@ with tabs[1]:
         else:
 
             with st.spinner(
-                "ElderShield is checking the message..."
+                "Checking message..."
             ):
 
-                case = safe_case_from_text(
+                case = build_text_case(
                     message.strip(),
                     "message",
                 )
 
-            save_case(case)
-            display_case(case)
-            display_report(case)
+            save_case(
+                case
+            )
+
+            display_case(
+                case
+            )
+
+            display_report(
+                case
+            )
 
 
 # ============================================================
 # CALL GUARDIAN
 # ============================================================
 
-with tabs[2]:
+with call_tab:
 
-    st.header("📞 Incoming Call Guardian")
+    st.header(
+        "📞 Incoming Call Guardian"
+    )
 
     st.warning(
         """
-### Should I answer?
+An unknown caller is not automatically a scam.
 
-A suspicious caller can start social engineering before
-asking for money or credentials.
-
-An unknown number alone does **not** mean the call is a scam.
-The warning becomes stronger when the caller uses threats,
-urgency, impersonation or asks for sensitive information.
-        """
+Risk increases when the caller uses urgency, threats,
+impersonation, financial requests, credential requests,
+remote-access instructions or secrecy.
+"""
     )
 
-    st.subheader("Demo scenarios")
+    st.subheader(
+        "Demo scenarios"
+    )
 
     scenario = st.selectbox(
-        "Choose a call scenario",
+        "Select a scenario",
         [
             "Unknown caller",
             "Bank/KYC urgency",
@@ -665,12 +1212,13 @@ urgency, impersonation or asks for sensitive information.
             "Investment guarantee",
             "Normal call",
         ],
+        key="call_scenario",
     )
 
-    scenario_text = {
+    scenarios = {
         "Unknown caller": (
             "An unknown caller is calling. "
-            "No claim or request has been provided yet."
+            "No claim or request has been provided."
         ),
         "Bank/KYC urgency": (
             "I am calling from your bank. "
@@ -679,7 +1227,7 @@ urgency, impersonation or asks for sensitive information.
         ),
         "Digital arrest": (
             "You are involved in a criminal case. "
-            "Stay on the video call and follow our instructions "
+            "Stay on this video call and follow our instructions "
             "or you will be arrested."
         ),
         "Job fee request": (
@@ -696,360 +1244,223 @@ urgency, impersonation or asks for sensitive information.
     }
 
     if st.button(
-        "📞 Assess incoming call",
+        "📞 Assess call",
         type="primary",
-        key="assess_call",
+        key="call_button",
     ):
 
-        text = scenario_text[
-            scenario
-        ]
+        case = build_call_case(
+            scenarios[scenario]
+        )
 
-        try:
-            result = assess_call_text(
-                text
-            )
+        save_case(
+            case
+        )
 
-            case = safe_case_from_text(
-                text,
-                "call",
-            )
+        display_case(
+            case
+        )
 
-            # Preserve the more severe deterministic call result.
-            call_risk = risk_label(
-                result.get(
-                    "risk",
-                    "UNKNOWN",
-                )
-            )
-
-            case_risk = risk_label(
-                case.get(
-                    "risk",
-                    "UNKNOWN",
-                )
-            )
-
-            priority = {
-                "SAFE": 0,
-                "UNKNOWN": 1,
-                "CAUTION": 2,
-                "HIGH": 3,
-                "CRITICAL": 4,
-            }
-
-            if priority.get(
-                call_risk,
-                1,
-            ) > priority.get(
-                case_risk,
-                1,
-            ):
-                case["risk"] = call_risk
-
-            case["call_evidence"] = result
-
-        except Exception as exc:
-
-            case = {
-                "risk": "UNKNOWN",
-                "summary": (
-                    "The call could not be reliably assessed."
-                ),
-                "reasons": [
-                    "Call analysis was unavailable."
-                ],
-                "actions": [
-                    "Do not share credentials or approve payments.",
-                    "Verify the caller independently.",
-                ],
-                "channels": ["call"],
-                "error": str(exc),
-            }
-
-        save_case(case)
-        display_case(case)
-        display_report(case)
+        display_report(
+            case
+        )
 
     st.divider()
 
-    st.subheader("✍️ Analyze what the caller said")
+    st.subheader(
+        "Analyze caller statement"
+    )
 
     call_text = st.text_area(
-        "Caller statement",
+        "What did the caller say?",
         height=180,
         placeholder=(
-            "Example: I am from the bank. "
-            "Your account has a problem..."
+            "Example: I am calling from your bank..."
         ),
-        key="call_text",
+        key="call_statement",
     )
 
     if st.button(
         "🔍 Check caller statement",
-        key="analyze_call_text",
+        key="caller_text_button",
     ):
 
         if not call_text.strip():
 
             st.warning(
-                "Please enter what the caller said."
+                "Please enter the caller's statement."
             )
 
         else:
 
-            with st.spinner(
-                "Checking the caller statement..."
-            ):
+            case = build_call_case(
+                call_text.strip()
+            )
 
-                try:
-                    call_result = assess_call_text(
-                        call_text.strip()
-                    )
+            save_case(
+                case
+            )
 
-                    case = safe_case_from_text(
-                        call_text.strip(),
-                        "call",
-                    )
+            display_case(
+                case
+            )
 
-                    case["call_evidence"] = (
-                        call_result
-                    )
-
-                except Exception:
-
-                    case = {
-                        "risk": "UNKNOWN",
-                        "summary": (
-                            "The caller statement could not be "
-                            "reliably assessed."
-                        ),
-                        "reasons": [
-                            "Analysis was unavailable."
-                        ],
-                        "actions": [
-                            "Do not share sensitive information.",
-                            "Verify independently.",
-                        ],
-                        "channels": ["call"],
-                    }
-
-            save_case(case)
-            display_case(case)
-            display_report(case)
+            display_report(
+                case
+            )
 
 
 # ============================================================
 # URL GUARDIAN
 # ============================================================
 
-with tabs[3]:
+with url_tab:
 
-    st.header("🔗 URL Guardian")
+    st.header(
+        "🔗 URL Guardian"
+    )
 
     st.write(
-        "Paste a link here before opening it."
+        "Paste a link here **before opening it**."
     )
 
     st.warning(
-        "Do not open the suspicious link first. "
-        "Paste it directly into ElderShield."
+        "ElderShield analyzes the URL structure. "
+        "It does not automatically open the website."
     )
 
     url = st.text_input(
-        "Suspicious URL",
-        placeholder="https://example.com/verify",
-        key="url_text",
+        "URL",
+        placeholder="https://example.org",
+        key="url_input",
     )
 
     if st.button(
         "🔍 Check URL",
         type="primary",
-        key="analyze_url",
+        key="url_button",
     ):
 
         if not url.strip():
 
             st.warning(
-                "Please enter a URL first."
+                "Please enter a URL."
             )
 
         else:
 
-            with st.spinner(
-                "Checking URL structure..."
-            ):
+            case = build_url_case(
+                url.strip()
+            )
 
-                try:
+            save_case(
+                case
+            )
 
-                    url_result = analyze_url(
-                        url.strip()
-                    )
+            display_case(
+                case
+            )
 
-                    case = safe_case_from_text(
-                        url.strip(),
-                        "url",
-                    )
-
-                    case["url_analysis"] = (
-                        url_result
-                    )
-
-                    # URL analysis is deterministic and should
-                    # influence the final verdict when severe.
-                    url_risk = risk_label(
-                        url_result.get(
-                            "risk",
-                            "UNKNOWN",
-                        )
-                    )
-
-                    case_risk = risk_label(
-                        case.get(
-                            "risk",
-                            "UNKNOWN",
-                        )
-                    )
-
-                    priority = {
-                        "SAFE": 0,
-                        "UNKNOWN": 1,
-                        "CAUTION": 2,
-                        "HIGH": 3,
-                        "CRITICAL": 4,
-                    }
-
-                    if priority.get(
-                        url_risk,
-                        1,
-                    ) > priority.get(
-                        case_risk,
-                        1,
-                    ):
-                        case["risk"] = url_risk
-
-                except Exception:
-
-                    case = {
-                        "risk": "UNKNOWN",
-                        "summary": (
-                            "The URL could not be reliably analyzed."
-                        ),
-                        "reasons": [
-                            "URL analysis failed."
-                        ],
-                        "actions": [
-                            "Do not open the link.",
-                            "Verify the website through an official source.",
-                        ],
-                        "channels": ["url"],
-                    }
-
-            save_case(case)
-            display_case(case)
-            display_report(case)
+            display_report(
+                case
+            )
 
 
 # ============================================================
-# HISTORY
+# SESSION HISTORY
 # ============================================================
 
 st.divider()
 
-st.header("🧾 Recent checks")
+st.header(
+    "🧾 Recent checks"
+)
 
 if not st.session_state.history:
 
     st.caption(
-        "No previous checks in this browser session."
+        "No checks have been recorded in this browser session."
     )
 
 else:
 
-    for index, item in enumerate(
-        st.session_state.history
-    ):
+    for item in st.session_state.history:
 
-        risk = risk_label(
+        risk = clean_risk(
             item.get(
                 "risk",
                 "UNKNOWN",
             )
         )
 
-        emoji = RISK_EMOJI.get(
-            risk,
-            "⚪",
+        emoji = RISK_EMOJI[
+            risk
+        ]
+
+        summary = item.get(
+            "summary",
+            "Safety check",
         )
 
         with st.expander(
-            f"{emoji} {risk} — "
-            f"{item.get('summary', 'Safety check')[:100]}"
+            f"{emoji} {risk} — {summary[:100]}"
         ):
 
-            if item.get("summary"):
-                st.write(
-                    item["summary"]
-                )
+            st.write(
+                summary
+            )
 
-            if item.get("categories"):
+            categories = item.get(
+                "categories",
+                [],
+            )
+
+            channels = item.get(
+                "channels",
+                [],
+            )
+
+            if categories:
                 st.caption(
                     "Categories: "
                     + ", ".join(
                         str(x)
-                        for x in item["categories"]
+                        for x in categories
                     )
                 )
 
-            if item.get("channels"):
+            if channels:
                 st.caption(
                     "Channel: "
                     + ", ".join(
                         str(x)
-                        for x in item["channels"]
+                        for x in channels
                     )
                 )
 
 
 # ============================================================
-# SAFETY FOOTER
+# FOOTER
 # ============================================================
 
 st.divider()
 
 st.markdown(
     """
-### 🛡️ ElderShield safety rules
+### 🛡️ Remember
 
-**Never share:**
-- OTP
-- UPI PIN
-- ATM PIN
-- Password
-- CVV
-- Full card credentials
+**Never share an OTP, UPI PIN, ATM PIN, password or CVV with a caller,
+message sender or website.**
 
-**Never allow an unexpected caller to:**
-- install remote-access software
-- control your screen
-- move money
-- approve a payment
-- "verify" your bank account using an OTP
+If someone pressures you to act immediately, **stop and verify independently.**
 
-**When money or credentials may already have been shared:**
-stop further interaction immediately and contact the relevant
-bank/service through its official channel.
-
-ElderShield does not guarantee safety and does not replace
-banks, law enforcement, cybersecurity professionals, or official
-support channels.
-
-The current Streamlit version cannot silently monitor phone calls,
-WhatsApp, other apps, or stop a transaction. Those capabilities
-would require a future native platform implementation.
+ElderShield is a safety aid, not a guarantee. The current web version
+cannot silently monitor cellular calls, WhatsApp, other apps or bank
+transactions. Such capabilities would require a future native platform
+implementation.
 """
 )
 
 st.caption(
-    "ElderShield • Open-source • Built for social benefit"
+    "ElderShield • Open-source • Social benefit"
 )
