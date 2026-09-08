@@ -1,0 +1,114 @@
+# ============================================================
+# ElderShield — Git Ignore Rules
+# ============================================================
+
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# -------------------------
+# Environment & Secrets
+# -------------------------
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.secret
+secrets.toml
+
+# Streamlit local secrets
+.streamlit/secrets.toml
+
+# -------------------------
+# IDE / Editor
+# -------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# -------------------------
+# Operating system
+# -------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -------------------------
+# Testing
+# -------------------------
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# -------------------------
+# Packaging
+# -------------------------
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# -------------------------
+# Logs
+# -------------------------
+*.log
+logs/
+
+# -------------------------
+# Local databases
+# -------------------------
+*.db
+*.sqlite
+*.sqlite3
+
+# -------------------------
+# Temporary files
+# -------------------------
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# -------------------------
+# User-uploaded files
+# -------------------------
+uploads/
+user_uploads/
+recordings/
+screenshots/
+
+# -------------------------
+# Generated reports
+# -------------------------
+reports/
+generated_reports/
+
+# -------------------------
+# Local benchmark output
+# -------------------------
+benchmark_results/
+evaluation_results/
+
+# -------------------------
+# OS / editor backups
+# -------------------------
+*~
+.#*
