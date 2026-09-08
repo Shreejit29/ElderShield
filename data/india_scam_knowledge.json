@@ -1,0 +1,362 @@
+{
+  "bank_kyc": {
+    "name": "Bank / KYC Scam",
+    "description": "A scam in which someone impersonates a bank, financial institution or service provider and claims that an account, KYC or banking service requires immediate action.",
+    "keywords": [
+      "kyc",
+      "account blocked",
+      "account suspended",
+      "bank account",
+      "bank verification",
+      "verify your account",
+      "update kyc",
+      "bank officer",
+      "bank representative",
+      "debit card blocked",
+      "credit card blocked"
+    ],
+    "indicators": [
+      "unexpected bank contact",
+      "urgent account warning",
+      "KYC pressure",
+      "request for confidential information",
+      "suspicious verification link",
+      "request to install an application"
+    ],
+    "dangerous_actions": [
+      "OTP",
+      "UPI PIN",
+      "ATM PIN",
+      "password",
+      "card details",
+      "bank credentials",
+      "remote access",
+      "screen sharing",
+      "money transfer"
+    ],
+    "recommended_actions": [
+      "Do not share OTP, PIN or password.",
+      "Do not click a suspicious banking link.",
+      "Do not install software at the caller's request.",
+      "Open your bank's official app yourself to check for genuine alerts.",
+      "Contact the bank through a trusted official channel."
+    ],
+    "warning": "Banks and legitimate service providers should not require you to disclose confidential authentication secrets to an unsolicited caller."
+  },
+
+  "remote_access": {
+    "name": "Remote Access Scam",
+    "description": "A scam where a fraudster attempts to persuade the victim to install remote-access or screen-sharing software so the fraudster can view or control the device.",
+    "keywords": [
+      "remote access",
+      "remote control",
+      "screen sharing",
+      "share your screen",
+      "control your phone",
+      "install this app",
+      "support app",
+      "anydesk",
+      "teamviewer",
+      "quick support",
+      "remote support"
+    ],
+    "indicators": [
+      "unexpected technical support",
+      "request to install an application",
+      "request for screen sharing",
+      "request for remote control",
+      "caller wants to guide banking activity remotely"
+    ],
+    "dangerous_actions": [
+      "remote access",
+      "screen sharing",
+      "install application",
+      "OTP",
+      "UPI PIN",
+      "ATM PIN",
+      "password",
+      "money transfer"
+    ],
+    "recommended_actions": [
+      "Do not install remote-access software because of an unsolicited caller.",
+      "Do not share your screen.",
+      "Do not allow another person to control your device.",
+      "Close the suspicious application if one was installed.",
+      "If banking information may have been exposed, contact your bank through a trusted channel."
+    ],
+    "warning": "Remote access can expose sensitive information and may allow a fraudster to observe or manipulate activity on the device."
+  },
+
+  "digital_arrest": {
+    "name": "Digital Arrest / Impersonation Scam",
+    "description": "A social-engineering scam in which criminals impersonate police, courts, government agencies or other authorities and use threats, fear and prolonged communication to control the victim.",
+    "keywords": [
+      "digital arrest",
+      "police case",
+      "police complaint",
+      "court case",
+      "legal action",
+      "arrest warrant",
+      "warrant",
+      "cyber crime",
+      "money laundering",
+      "illegal transaction",
+      "your name is involved",
+      "stay on the call",
+      "do not disconnect",
+      "keep the camera on"
+    ],
+    "indicators": [
+      "authority impersonation",
+      "threat of arrest",
+      "threat of legal action",
+      "forced secrecy",
+      "prolonged video call",
+      "instruction not to contact family",
+      "instruction not to disconnect",
+      "demand for money to avoid legal action"
+    ],
+    "dangerous_actions": [
+      "money transfer",
+      "bank credentials",
+      "OTP",
+      "UPI PIN",
+      "ATM PIN",
+      "password",
+      "screen sharing",
+      "video call",
+      "keep camera on"
+    ],
+    "recommended_actions": [
+      "Stop following the caller's instructions.",
+      "Do not transfer money to prove your innocence.",
+      "Do not share OTP, PIN or passwords.",
+      "Do not allow an unknown caller to control your device.",
+      "End the call and independently contact the relevant authority if necessary.",
+      "Tell a trusted family member or person you know."
+    ],
+    "warning": "Threats of arrest or legal consequences are powerful social-engineering techniques. Do not make financial decisions because an unsolicited caller is threatening you."
+  },
+
+  "courier": {
+    "name": "Courier / Parcel Scam",
+    "description": "A scam involving fake courier, customs, parcel or delivery claims that are used to obtain money or sensitive information.",
+    "keywords": [
+      "courier",
+      "parcel",
+      "package",
+      "customs",
+      "delivery",
+      "shipment",
+      "illegal parcel",
+      "drugs in parcel",
+      "parcel seized",
+      "customs fee",
+      "delivery charge",
+      "clearance fee"
+    ],
+    "indicators": [
+      "unexpected parcel claim",
+      "customs threat",
+      "police involvement claim",
+      "unexpected payment request",
+      "request for identity information",
+      "urgent delivery payment"
+    ],
+    "dangerous_actions": [
+      "money transfer",
+      "OTP",
+      "UPI PIN",
+      "ATM PIN",
+      "password",
+      "card details",
+      "remote access"
+    ],
+    "recommended_actions": [
+      "Do not pay an unexpected courier or customs demand immediately.",
+      "Do not share banking credentials.",
+      "Do not install an application requested by the caller.",
+      "Verify the shipment independently using a trusted courier channel.",
+      "Tell a trusted person if the caller is threatening you."
+    ],
+    "warning": "Unexpected parcel or customs claims can be used to create fear and pressure victims into sending money or sharing personal information."
+  },
+
+  "job": {
+    "name": "Job / Employment Scam",
+    "description": "A scam that promises employment, work-from-home opportunities or recruitment while requesting money, personal information or other risky actions.",
+    "keywords": [
+      "job offer",
+      "job opportunity",
+      "work from home",
+      "part time job",
+      "employment",
+      "recruitment",
+      "selection",
+      "interview",
+      "joining fee",
+      "registration fee",
+      "security deposit",
+      "training fee"
+    ],
+    "indicators": [
+      "unexpected job offer",
+      "guaranteed income",
+      "upfront fee",
+      "registration payment",
+      "security deposit",
+      "request for sensitive information",
+      "pressure to pay quickly"
+    ],
+    "dangerous_actions": [
+      "money transfer",
+      "registration payment",
+      "joining fee",
+      "security deposit",
+      "OTP",
+      "UPI PIN",
+      "bank credentials",
+      "remote access"
+    ],
+    "recommended_actions": [
+      "Do not pay an unexpected recruitment or joining fee.",
+      "Verify the employer independently.",
+      "Do not share banking credentials or OTPs.",
+      "Do not install unknown applications for a job interview or verification.",
+      "Be cautious of guaranteed income promises."
+    ],
+    "warning": "Fraudulent job offers often use attractive income promises and urgency to make victims pay fees or disclose sensitive information."
+  },
+
+  "investment": {
+    "name": "Investment / Trading Scam",
+    "description": "A scam that promises unusually high or guaranteed returns and attempts to persuade the victim to deposit money into a fraudulent investment platform or account.",
+    "keywords": [
+      "investment",
+      "trading",
+      "profit",
+      "guaranteed return",
+      "guaranteed profit",
+      "double your money",
+      "stock tip",
+      "crypto",
+      "cryptocurrency",
+      "trading account",
+      "investment account",
+      "withdrawal fee"
+    ],
+    "indicators": [
+      "guaranteed returns",
+      "unusually high profits",
+      "pressure to invest quickly",
+      "fake trading platform",
+      "difficulty withdrawing money",
+      "additional payment demanded before withdrawal",
+      "personal account used for investment payment"
+    ],
+    "dangerous_actions": [
+      "money transfer",
+      "investment payment",
+      "UPI PIN",
+      "OTP",
+      "bank credentials",
+      "remote access",
+      "install application"
+    ],
+    "recommended_actions": [
+      "Do not transfer money based solely on a caller's investment promise.",
+      "Do not trust guaranteed-return claims.",
+      "Verify the investment service independently.",
+      "Do not install unknown trading applications.",
+      "Do not share banking credentials or OTPs."
+    ],
+    "warning": "Guaranteed or unusually high returns combined with pressure to send money are strong warning signs."
+  },
+
+  "prize": {
+    "name": "Prize / Lottery / Reward Scam",
+    "description": "A scam claiming that the victim has won a prize, lottery, reward or benefit and must first pay money or provide sensitive information.",
+    "keywords": [
+      "lottery",
+      "prize",
+      "winner",
+      "you have won",
+      "reward",
+      "cash prize",
+      "lucky draw",
+      "gift",
+      "claim your prize",
+      "processing fee",
+      "tax payment",
+      "release fee"
+    ],
+    "indicators": [
+      "unexpected prize",
+      "payment required before receiving prize",
+      "processing fee",
+      "tax or release fee",
+      "request for banking information",
+      "urgency to claim reward"
+    ],
+    "dangerous_actions": [
+      "money transfer",
+      "processing fee",
+      "tax payment",
+      "OTP",
+      "UPI PIN",
+      "ATM PIN",
+      "bank credentials",
+      "card details"
+    ],
+    "recommended_actions": [
+      "Do not pay money to receive an unexpected prize.",
+      "Do not share banking credentials.",
+      "Do not provide OTP or PIN.",
+      "Verify the promotion independently.",
+      "Treat unexpected lottery or prize claims with extreme caution."
+    ],
+    "warning": "A demand for payment before releasing an unexpected prize is a common fraud pattern."
+  },
+
+  "payment_qr": {
+    "name": "QR / Payment Request Scam",
+    "description": "A scam in which a victim is persuaded to scan a QR code, approve a payment request or transfer money under a misleading explanation.",
+    "keywords": [
+      "scan qr",
+      "scan this qr",
+      "qr code",
+      "receive money",
+      "payment request",
+      "collect request",
+      "approve payment",
+      "upi",
+      "send one rupee",
+      "verification payment",
+      "refund payment"
+    ],
+    "indicators": [
+      "unexpected QR code",
+      "claim that scanning a QR receives money",
+      "request to approve an unknown payment",
+      "small verification payment",
+      "refund-related payment request",
+      "caller guiding UPI activity"
+    ],
+    "dangerous_actions": [
+      "scan QR",
+      "approve payment",
+      "UPI PIN",
+      "money transfer",
+      "payment request",
+      "bank credentials"
+    ],
+    "recommended_actions": [
+      "Do not scan an unexpected QR code because a caller tells you to.",
+      "Remember that approving a UPI payment can send money.",
+      "Read the payment screen carefully before approving anything.",
+      "Never disclose your UPI PIN to another person.",
+      "Cancel an unexpected payment request."
+    ],
+    "warning": "A QR code or payment request should never be trusted simply because someone claims it will help you receive money."
+  }
+}
