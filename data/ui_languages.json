@@ -1,0 +1,65 @@
+{
+  "default_language": "en",
+  "languages": {
+    "en": {
+      "name": "English",
+      "native_name": "English",
+      "enabled": true
+    },
+    "hi": {
+      "name": "Hindi",
+      "native_name": "हिन्दी",
+      "enabled": true
+    },
+    "mr": {
+      "name": "Marathi",
+      "native_name": "मराठी",
+      "enabled": true
+    },
+    "gu": {
+      "name": "Gujarati",
+      "native_name": "ગુજરાતી",
+      "enabled": true
+    },
+    "bn": {
+      "name": "Bengali",
+      "native_name": "বাংলা",
+      "enabled": true
+    },
+    "ta": {
+      "name": "Tamil",
+      "native_name": "தமிழ்",
+      "enabled": true
+    },
+    "te": {
+      "name": "Telugu",
+      "native_name": "తెలుగు",
+      "enabled": true
+    },
+    "kn": {
+      "name": "Kannada",
+      "native_name": "ಕನ್ನಡ",
+      "enabled": true
+    },
+    "ml": {
+      "name": "Malayalam",
+      "native_name": "മലയാളം",
+      "enabled": true
+    },
+    "pa": {
+      "name": "Punjabi",
+      "native_name": "ਪੰਜਾਬੀ",
+      "enabled": true
+    },
+    "or": {
+      "name": "Odia",
+      "native_name": "ଓଡ଼ିଆ",
+      "enabled": true
+    },
+    "as": {
+      "name": "Assamese",
+      "native_name": "অসমীয়া",
+      "enabled": true
+    }
+  }
+}
