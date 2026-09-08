@@ -1,0 +1,367 @@
+{
+  "version": "1.0",
+
+  "patterns": [
+
+    {
+      "id": "bank_kyc",
+      "name": "Bank / KYC Scam",
+      "category": "bank_kyc",
+      "description": "A scammer impersonates a bank or financial service and claims that KYC, an account or a card needs urgent verification.",
+      "common_claims": [
+        "Your KYC has expired.",
+        "Your bank account will be blocked.",
+        "Your debit card will be deactivated.",
+        "Your account needs immediate verification."
+      ],
+      "signals": [
+        "bank impersonation",
+        "KYC request",
+        "account threat",
+        "urgency",
+        "suspicious link",
+        "OTP request",
+        "PIN request"
+      ],
+      "dangerous_actions": [
+        "OTP",
+        "UPI PIN",
+        "ATM PIN",
+        "PASSWORD",
+        "CVV",
+        "BANK CREDENTIALS"
+      ],
+      "safe_response": [
+        "Do not click the supplied link.",
+        "Do not share OTP, PIN, password or CVV.",
+        "Open the official banking application yourself.",
+        "Contact the bank through an official channel."
+      ]
+    },
+
+    {
+      "id": "digital_arrest",
+      "name": "Digital Arrest Scam",
+      "category": "digital_arrest",
+      "description": "A scammer impersonates police, investigators or government authorities and uses threats, video calls or legal claims to pressure the victim.",
+      "common_claims": [
+        "Your Aadhaar is linked to illegal activity.",
+        "A parcel in your name contains illegal material.",
+        "There is a money-laundering case against you.",
+        "You are under digital arrest.",
+        "You must stay on video call with the officer."
+      ],
+      "signals": [
+        "authority impersonation",
+        "threat",
+        "fear",
+        "legal consequences",
+        "secrecy",
+        "video-call pressure",
+        "money demand"
+      ],
+      "dangerous_actions": [
+        "MONEY TRANSFER",
+        "BANK CREDENTIALS",
+        "OTP",
+        "REMOTE ACCESS"
+      ],
+      "safe_response": [
+        "End the call.",
+        "Do not transfer money to a so-called safe account.",
+        "Do not install remote-access software.",
+        "Verify the claim independently.",
+        "Tell a trusted person."
+      ]
+    },
+
+    {
+      "id": "courier",
+      "name": "Courier / Parcel Scam",
+      "category": "courier",
+      "description": "A scammer claims that a parcel connected to the victim contains illegal or suspicious material and demands money or personal information.",
+      "common_claims": [
+        "A parcel in your name has been seized.",
+        "Illegal items were found in your parcel.",
+        "Customs clearance is required immediately.",
+        "A police case has been registered for your parcel."
+      ],
+      "signals": [
+        "parcel claim",
+        "customs claim",
+        "authority impersonation",
+        "threat",
+        "urgency",
+        "payment demand"
+      ],
+      "dangerous_actions": [
+        "MONEY TRANSFER",
+        "OTP",
+        "BANK CREDENTIALS",
+        "REMOTE ACCESS"
+      ],
+      "safe_response": [
+        "Do not pay the caller.",
+        "Do not share banking information.",
+        "Do not install an application.",
+        "Verify the parcel through the courier's official website."
+      ]
+    },
+
+    {
+      "id": "job",
+      "name": "Job / Work-from-Home Scam",
+      "category": "job",
+      "description": "A scammer offers a job or work-from-home opportunity and later demands registration, training, security or processing fees.",
+      "common_claims": [
+        "You have been selected for a job.",
+        "Earn money from home.",
+        "Pay a small registration fee.",
+        "Pay a refundable security deposit.",
+        "Complete this task to unlock your salary."
+      ],
+      "signals": [
+        "unexpected job offer",
+        "advance payment",
+        "registration fee",
+        "security deposit",
+        "guaranteed income",
+        "task-based payment"
+      ],
+      "dangerous_actions": [
+        "MONEY TRANSFER",
+        "BANK CREDENTIALS",
+        "OTP",
+        "REMOTE ACCESS"
+      ],
+      "safe_response": [
+        "Do not pay to obtain a job.",
+        "Verify the employer independently.",
+        "Do not share banking credentials.",
+        "Do not install unknown applications."
+      ]
+    },
+
+    {
+      "id": "investment",
+      "name": "Investment / Trading Scam",
+      "category": "investment",
+      "description": "A scammer promises guaranteed or unusually high investment returns and pressures the victim to deposit money.",
+      "common_claims": [
+        "Guaranteed high returns.",
+        "Double your money quickly.",
+        "Risk-free investment.",
+        "Guaranteed trading profit.",
+        "Exclusive investment opportunity."
+      ],
+      "signals": [
+        "guaranteed returns",
+        "high returns",
+        "urgency",
+        "fake investment platform",
+        "social proof",
+        "pressure to deposit"
+      ],
+      "dangerous_actions": [
+        "MONEY TRANSFER",
+        "BANK CREDENTIALS",
+        "REMOTE ACCESS"
+      ],
+      "safe_response": [
+        "Do not transfer money because of pressure.",
+        "Do not trust guaranteed returns.",
+        "Verify the company independently.",
+        "Do not install remote-access software."
+      ]
+    },
+
+    {
+      "id": "prize",
+      "name": "Prize / Lottery Scam",
+      "category": "prize",
+      "description": "A scammer claims that the victim has won a prize, lottery or reward and demands a payment before releasing it.",
+      "common_claims": [
+        "Congratulations, you won a prize.",
+        "You have won the lottery.",
+        "Pay the processing fee to claim your reward.",
+        "Pay the tax to receive the prize."
+      ],
+      "signals": [
+        "unexpected prize",
+        "lottery claim",
+        "processing fee",
+        "tax demand",
+        "urgency"
+      ],
+      "dangerous_actions": [
+        "MONEY TRANSFER",
+        "OTP",
+        "BANK CREDENTIALS"
+      ],
+      "safe_response": [
+        "Do not pay a fee to claim an unexpected prize.",
+        "Do not share banking credentials.",
+        "Verify the promotion independently."
+      ]
+    },
+
+    {
+      "id": "qr_payment",
+      "name": "QR / UPI Payment Scam",
+      "category": "payment_qr",
+      "description": "A scammer sends a QR code or payment request and falsely claims that scanning or approving it will result in receiving money.",
+      "common_claims": [
+        "Scan this QR code to receive payment.",
+        "Enter your UPI PIN to receive the refund.",
+        "Approve this collect request.",
+        "Scan the QR code to verify your account."
+      ],
+      "signals": [
+        "QR code",
+        "UPI payment request",
+        "collect request",
+        "refund claim",
+        "receive-money deception"
+      ],
+      "dangerous_actions": [
+        "SCAN QR",
+        "UPI PIN",
+        "PAYMENT APPROVAL",
+        "MONEY TRANSFER"
+      ],
+      "safe_response": [
+        "Do not scan an unexpected QR code.",
+        "You do not need to enter your UPI PIN to receive money.",
+        "Check the recipient and amount before approving a payment.",
+        "Cancel unexpected payment requests."
+      ]
+    },
+
+    {
+      "id": "remote_access",
+      "name": "Remote Access Scam",
+      "category": "remote_access",
+      "description": "A scammer convinces the victim to install remote-control software or share their screen.",
+      "common_claims": [
+        "Install this application so I can help you.",
+        "Give me remote access to fix your account.",
+        "Share your screen so I can verify your identity.",
+        "Install AnyDesk or another support application."
+      ],
+      "signals": [
+        "remote-access request",
+        "screen sharing",
+        "application installation",
+        "technical support impersonation",
+        "bank support impersonation"
+      ],
+      "dangerous_actions": [
+        "REMOTE ACCESS",
+        "INSTALL APP",
+        "SCREEN SHARING"
+      ],
+      "safe_response": [
+        "Do not install remote-access software because of an unexpected caller.",
+        "Do not share your screen.",
+        "End the call if the person continues pressuring you.",
+        "Contact the organization through an official channel."
+      ]
+    },
+
+    {
+      "id": "recovery",
+      "name": "Recovery Scam",
+      "category": "recovery",
+      "description": "A scammer contacts someone who has already lost money and promises to recover it in exchange for another payment or sensitive information.",
+      "common_claims": [
+        "We can recover your stolen money.",
+        "Pay a recovery fee.",
+        "We are from the cybercrime recovery department.",
+        "Your money is ready to be returned."
+      ],
+      "signals": [
+        "previous scam reference",
+        "recovery promise",
+        "advance fee",
+        "authority impersonation",
+        "urgency"
+      ],
+      "dangerous_actions": [
+        "MONEY TRANSFER",
+        "BANK CREDENTIALS",
+        "OTP",
+        "REMOTE ACCESS"
+      ],
+      "safe_response": [
+        "Do not pay an unofficial recovery agent.",
+        "Do not share OTP, PIN or passwords.",
+        "Use official banking and cybercrime reporting channels.",
+        "Preserve evidence from the original incident."
+      ]
+    },
+
+    {
+      "id": "sim_kyc",
+      "name": "SIM / Telecom KYC Scam",
+      "category": "bank_kyc",
+      "description": "A scammer claims that a SIM card or mobile connection will be disconnected unless the victim completes an urgent verification.",
+      "common_claims": [
+        "Your SIM will be blocked today.",
+        "Complete KYC immediately.",
+        "Your mobile number is involved in illegal activity.",
+        "Install this application for SIM verification."
+      ],
+      "signals": [
+        "SIM threat",
+        "KYC claim",
+        "urgency",
+        "authority impersonation",
+        "application installation"
+      ],
+      "dangerous_actions": [
+        "OTP",
+        "REMOTE ACCESS",
+        "INSTALL APP",
+        "BANK CREDENTIALS"
+      ],
+      "safe_response": [
+        "Do not install an application sent by the caller.",
+        "Do not share OTP or banking credentials.",
+        "Verify the claim through your telecom provider's official channels."
+      ]
+    },
+
+    {
+      "id": "sextortion",
+      "name": "Sextortion / Blackmail Scam",
+      "category": "digital_arrest",
+      "description": "A scammer threatens to publish or report private material unless the victim sends money or follows instructions.",
+      "common_claims": [
+        "We will publish your video.",
+        "Pay immediately or we will contact your family.",
+        "A police case will be filed unless you pay.",
+        "Send money to delete the recording."
+      ],
+      "signals": [
+        "blackmail",
+        "threat",
+        "secrecy",
+        "urgent payment",
+        "authority threat"
+      ],
+      "dangerous_actions": [
+        "MONEY TRANSFER",
+        "BANK CREDENTIALS",
+        "REMOTE ACCESS"
+      ],
+      "safe_response": [
+        "Do not pay because of threats.",
+        "Do not provide additional private material.",
+        "Preserve evidence.",
+        "Seek help from a trusted person.",
+        "Use official reporting channels when appropriate."
+      ]
+    }
+
+  ]
+}
