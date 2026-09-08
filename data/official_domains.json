@@ -1,0 +1,66 @@
+{
+  "sbi": {
+    "name": "State Bank of India",
+    "domains": [
+      "sbi.co.in"
+    ],
+    "country": "India",
+    "source_note": "Conservative starter entry. Users should independently verify through the official SBI app or website."
+  },
+  "incometax": {
+    "name": "Income Tax Department",
+    "domains": [
+      "incometax.gov.in"
+    ],
+    "country": "India",
+    "source_note": "Conservative starter entry. Domain matching is a safety signal, not proof of legitimacy."
+  },
+  "uidai": {
+    "name": "Unique Identification Authority of India",
+    "domains": [
+      "uidai.gov.in"
+    ],
+    "country": "India",
+    "source_note": "Conservative starter entry. Users should independently verify important requests."
+  },
+  "rbi": {
+    "name": "Reserve Bank of India",
+    "domains": [
+      "rbi.org.in"
+    ],
+    "country": "India",
+    "source_note": "Conservative starter entry. RBI does not require users to disclose banking secrets to unsolicited callers."
+  },
+  "india_post": {
+    "name": "India Post",
+    "domains": [
+      "indiapost.gov.in"
+    ],
+    "country": "India",
+    "source_note": "Conservative starter entry. Be cautious of courier and parcel-payment scams."
+  },
+  "irctc": {
+    "name": "Indian Railway Catering and Tourism Corporation",
+    "domains": [
+      "irctc.co.in"
+    ],
+    "country": "India",
+    "source_note": "Conservative starter entry."
+  },
+  "epfindia": {
+    "name": "Employees Provident Fund Organisation",
+    "domains": [
+      "epfindia.gov.in"
+    ],
+    "country": "India",
+    "source_note": "Conservative starter entry."
+  },
+  "digilocker": {
+    "name": "DigiLocker",
+    "domains": [
+      "digilocker.gov.in"
+    ],
+    "country": "India",
+    "source_note": "Conservative starter entry."
+  }
+}
