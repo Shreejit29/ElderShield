@@ -1,0 +1,221 @@
+{
+  "version": "1.0",
+  "title": "ElderShield Emergency Guidance",
+
+  "general": {
+    "name": "Immediate Scam Safety",
+    "steps": [
+      "Stop communicating with the suspicious person.",
+      "Do not send any more money.",
+      "Do not share OTP, UPI PIN, ATM PIN, password or CVV.",
+      "Do not install remote-access software.",
+      "Do not approve unknown payment requests.",
+      "Do not scan a QR code because someone told you to receive money.",
+      "Contact your bank or service provider through an official channel.",
+      "Tell a trusted family member or person you trust.",
+      "Keep screenshots, messages, phone numbers and transaction details as evidence."
+    ]
+  },
+
+  "otp_shared": {
+    "name": "OTP Shared",
+    "severity": "CRITICAL",
+    "steps": [
+      "Stop the conversation immediately.",
+      "Do not share any further OTP or authentication code.",
+      "Contact your bank immediately using its official customer-care number.",
+      "Ask the bank to check for unauthorized transactions or account changes.",
+      "If money has been lost or unauthorized banking activity has occurred, report it through India's official cybercrime reporting channels.",
+      "Change affected passwords if appropriate.",
+      "Tell a trusted family member or person you trust."
+    ]
+  },
+
+  "upi_pin_shared": {
+    "name": "UPI PIN Shared",
+    "severity": "CRITICAL",
+    "steps": [
+      "Stop the call or conversation.",
+      "Do not approve any additional payment request.",
+      "Contact your bank immediately through an official channel.",
+      "Check recent UPI and bank transactions.",
+      "If you notice an unauthorized transaction, report it immediately.",
+      "If your UPI PIN may have been exposed, change it using your legitimate banking or UPI application.",
+      "Tell a trusted family member or person you trust."
+    ]
+  },
+
+  "atm_pin_shared": {
+    "name": "ATM / Card PIN Shared",
+    "severity": "CRITICAL",
+    "steps": [
+      "Stop communicating with the caller.",
+      "Contact the card-issuing bank immediately.",
+      "Ask the bank to secure the card/account.",
+      "Change the affected PIN through an official banking channel.",
+      "Check recent transactions for unauthorized activity.",
+      "Report suspicious transactions immediately.",
+      "Do not provide any additional card information."
+    ]
+  },
+
+  "password_shared": {
+    "name": "Password Shared",
+    "severity": "CRITICAL",
+    "steps": [
+      "Stop communicating with the suspicious person.",
+      "Change the exposed password using the official website or application.",
+      "Do not reuse the exposed password on another account.",
+      "Enable multi-factor authentication where available.",
+      "Review recent account activity.",
+      "If the exposed password was also used for banking or email, secure those accounts immediately."
+    ]
+  },
+
+  "remote_access_granted": {
+    "name": "Remote Access Granted",
+    "severity": "CRITICAL",
+    "steps": [
+      "Disconnect the suspicious remote-access session.",
+      "If necessary, disconnect the device from the internet.",
+      "Uninstall the remote-access application if it is not legitimately required.",
+      "Contact your bank through an official channel if banking applications or accounts were accessible.",
+      "Change important passwords from a trusted device.",
+      "Check bank, UPI and email activity for unauthorized changes.",
+      "Consider getting help from a trusted technical person."
+    ]
+  },
+
+  "money_sent": {
+    "name": "Money Sent to Suspected Scammer",
+    "severity": "CRITICAL",
+    "steps": [
+      "Contact your bank or payment provider immediately.",
+      "Ask whether the transaction can be stopped, frozen or recalled.",
+      "Keep the transaction ID, amount, date and recipient details.",
+      "Report the incident through India's official cybercrime reporting channels.",
+      "Preserve screenshots, messages, phone numbers, emails and other evidence.",
+      "Do not send additional money to anyone promising to recover the lost money."
+    ]
+  },
+
+  "card_details_shared": {
+    "name": "Card Details Shared",
+    "severity": "CRITICAL",
+    "steps": [
+      "Contact the card-issuing bank immediately.",
+      "Ask the bank to secure or block the affected card if necessary.",
+      "Monitor recent transactions.",
+      "Do not provide OTP, CVV, PIN or additional card information.",
+      "Report unauthorized transactions immediately."
+    ]
+  },
+
+  "suspicious_app_installed": {
+    "name": "Suspicious Application Installed",
+    "severity": "HIGH",
+    "steps": [
+      "Do not open or use the suspicious application again.",
+      "Disconnect from the internet if you believe the device is being remotely controlled.",
+      "Remove the application if it is safe to do so.",
+      "Check whether accessibility, device-admin or other powerful permissions were granted.",
+      "Contact your bank if banking information may have been exposed.",
+      "Change important passwords from a trusted device.",
+      "Ask a trusted technical person for help if you are unsure how to secure the device."
+    ]
+  },
+
+  "digital_arrest": {
+    "name": "Possible Digital-Arrest Scam",
+    "severity": "HIGH",
+    "steps": [
+      "End the call.",
+      "Do not remain on a video call because the caller demands it.",
+      "Do not transfer money to a so-called safe, verification or police account.",
+      "Do not share OTP, PIN or password.",
+      "Do not install remote-access software.",
+      "Verify any legal or government claim independently using an official source.",
+      "Tell a trusted family member or person you trust."
+    ]
+  },
+
+  "qr_payment": {
+    "name": "Suspicious QR / Payment Request",
+    "severity": "HIGH",
+    "steps": [
+      "Do not scan the QR code unless you understand exactly what it will do.",
+      "Remember that scanning a QR code can initiate a payment flow; it does not automatically mean you will receive money.",
+      "Do not enter your UPI PIN to receive money.",
+      "Check the recipient name and amount before approving any payment.",
+      "Cancel the transaction if anything looks unexpected."
+    ]
+  },
+
+  "job_scam": {
+    "name": "Possible Job Scam",
+    "severity": "HIGH",
+    "steps": [
+      "Do not pay a registration, security, training or processing fee because of an unexpected job offer.",
+      "Do not share banking credentials or OTP.",
+      "Verify the employer independently.",
+      "Use the employer's official website rather than a link supplied by the caller."
+    ]
+  },
+
+  "investment_scam": {
+    "name": "Possible Investment Scam",
+    "severity": "HIGH",
+    "steps": [
+      "Do not transfer money during a pressured investment call.",
+      "Do not trust guaranteed or unusually high returns without independent verification.",
+      "Do not give remote access to your device.",
+      "Verify the company and investment through independent official sources."
+    ]
+  },
+
+  "courier_scam": {
+    "name": "Possible Courier Scam",
+    "severity": "HIGH",
+    "steps": [
+      "Do not pay a caller who claims that a parcel must be cleared urgently.",
+      "Do not share OTP, PIN or banking credentials.",
+      "Do not install applications at the caller's request.",
+      "Verify any parcel claim independently using the courier's official website or customer-care channel."
+    ]
+  },
+
+  "bank_kyc": {
+    "name": "Possible Bank / KYC Scam",
+    "severity": "HIGH",
+    "steps": [
+      "Do not click a suspicious KYC link.",
+      "Do not share OTP, PIN, password or CVV.",
+      "Do not install an application sent by the caller.",
+      "Contact the bank using the number on its official website, card or legitimate banking application.",
+      "Check your account through the official banking application or website."
+    ]
+  },
+
+  "recovery_scam": {
+    "name": "Possible Recovery Scam",
+    "severity": "HIGH",
+    "steps": [
+      "Do not pay anyone who promises guaranteed recovery of stolen money.",
+      "Do not give remote access to your device.",
+      "Do not share OTP, PIN or password.",
+      "Use official banking and cybercrime reporting channels for recovery assistance.",
+      "Keep all evidence from the original scam."
+    ]
+  },
+
+  "india_reporting": {
+    "country": "India",
+    "guidance": [
+      "For financial fraud, contact your bank or payment provider immediately.",
+      "Use India's official cybercrime reporting and emergency channels when appropriate.",
+      "Preserve transaction IDs and other evidence.",
+      "Do not rely on unofficial social-media accounts claiming to recover money."
+    ],
+    "important_note": "ElderShield provides guidance and does not replace official law-enforcement, banking or emergency services."
+  }
+}
